@@ -42,21 +42,12 @@ var Markdown = function() {
       John Doe > This is a quote => [QUOTE="John Doe"]This is a quote[/QUOTE]
   */
   self.quote = function(content) {
-    var quoteTemplate1, quoteTemplate2;
 
-    quoteTemplate1 = _.template("[QUOTE]\n<%= quote %>\n[/QUOTE]");
-    quoteTemplate2 = _.template('[QUOTE="<%= by %>"]\n<%= quote %>\n[/QUOTE]');
-
-    return content.replace(/(.+)?>\s{1}?([^\n]+)/g, function(_, by, quote) {
+    return content.replace(/(.+)?>\s{1}?([^\n]+)/g, function(by, quote) {
       if (by) {
-        return quoteTemplate2({
-          by: by.trim(),
-          quote: quote
-        });
+        return `[QUOTE="${by.trim()}"]\n${quote}\n[/QUOTE]`
       } else {
-        return quoteTemplate1({
-          quote: quote
-        });
+        return `[QUOTE]\n${quote}\n[/QUOTE]`
       }
     });
   };
@@ -122,12 +113,11 @@ var Markdown = function() {
     var regexp, template, getType;
 
     regexp = /```[ \f\t\v\u00a0\u1680\u180e\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*(([^\n]+))?\n([\s\S]+?(?=\n```))\n```/gm;
-    template = _.template("[<%= type %>]\n<%= content %>\n[/<%= type %>]");
 
     getType = function(match) {
       match = match || "";
       var type = match.trim().toUpperCase();
-      if (_.include(self.options.codeBlockTypes, type)) {
+      if (self.options.codeBlockTypes.includes(type)) {
         return type;
       } else {
         return self.options.defaultCodeBlock;
@@ -149,18 +139,12 @@ var Markdown = function() {
         code = code.trim();
       }
 
-      return template({
-        type: type,
-        content: code
-      });
+      return `[${type}]\n${code}\n[/${type}]`
     });
 
     /* `My code block` => [CODE]My code block[/CODE] */
     return content.replace(/`([^`\n]+.?)`/g, function(content, code) {
-      return template({
-        type: "CODE",
-        content: code
-      });
+      return `[CODE]\n${code}\n[/CODE]`
     });
   };
 
@@ -188,7 +172,8 @@ var Markdown = function() {
 
         };
       } else {
-        _.each(["unorderedList", "orderedList", "codeIndent", "quoteBlock"], function(method) {
+	      ["unorderedList", "orderedList", "codeIndent", "quoteBlock"].forEach(method => {
+        
           /*
             re = {
               to: 5,
